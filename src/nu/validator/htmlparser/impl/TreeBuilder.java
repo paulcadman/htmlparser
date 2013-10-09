@@ -4001,6 +4001,8 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                         case HTML:
                         case BODY:
                         case BR:
+                            flushCharacters();
+                            pop();
                             appendToCurrentNodeAndPushBodyElement();
                             mode = FRAMESET_OK;
                             continue;
