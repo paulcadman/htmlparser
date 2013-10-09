@@ -906,6 +906,8 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             switch (mode) {
                 case INITIAL:
                 case BEFORE_HTML:
+                case AFTER_AFTER_BODY:
+                case AFTER_AFTER_FRAMESET:
                     /*
                      * A comment token Append a Comment node to the Document
                      * object with the data attribute set to the data given in
@@ -913,21 +915,16 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                      */
                     appendCommentToDocument(buf, start, length);
                     return;
-                case AFTER_AFTER_BODY:
-                case AFTER_AFTER_FRAMESET:
                 case AFTER_BODY:
-                    flushCharacters();
-                    appendComment(stack[currentPtr].node, buf, start, length);
-                    return;
                     /*
                      * A comment token Append a Comment node to the first
                      * element in the stack of open elements (the html element),
                      * with the data attribute set to the data given in the
                      * comment token.
                      */
-                    // flushCharacters();
-                    // appendComment(stack[0].node, buf, start, length);
-                    // return;
+                    flushCharacters();
+                    appendComment(stack[0].node, buf, start, length);
+                    return;
                 default:
                     break;
             }
@@ -1190,6 +1187,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     i--;
                                     continue;
                                 case AFTER_HEAD:
+                                    flushCharacters();
                                     pop();
                                     if (start < i) {
                                         accumulateCharacters(buf, start, i
@@ -2531,7 +2529,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                 attributes = null; // CPP
                                 break starttagloop;
                             default:
-                                pop();
+                                // pop();
                                 mode = AFTER_HEAD;
                                 continue starttagloop;
                         }
@@ -2543,7 +2541,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                             // here?
                             errStrayStartTag(name);
                             if (!fragment && !isTemplateContents()) {
-                                addAttributesToHtml(attributes);
+                                // addAttributesToHtml(attributes);
                                 attributes = null; // CPP
                             }
                             break starttagloop;
@@ -2883,11 +2881,12 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                         case HTML:
                             errStrayStartTag(name);
                             if (!fragment && !isTemplateContents()) {
-                                addAttributesToHtml(attributes);
+                                // addAttributesToHtml(attributes);
                                 attributes = null; // CPP
                             }
                             break starttagloop;
                         case BODY:
+                            flushCharacters();
                             pop();
                             if (attributes.getLength() == 0) {
                                 appendToCurrentNodeAndPushBodyElement();
@@ -2899,6 +2898,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                             attributes = null; // CPP
                             break starttagloop;
                         case FRAMESET:
+                            flushCharacters();
                             pop();
                             appendToCurrentNodeAndPushElement(
                                     elementName,
@@ -2978,6 +2978,8 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                             errStrayStartTag(name);
                             break starttagloop;
                         default:
+                            flushCharacters();
+                            pop();
                             appendToCurrentNodeAndPushBodyElement();
                             mode = FRAMESET_OK;
                             continue;
@@ -4018,7 +4020,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                     // XXX need to manage insertion point here
                     pop();
                     if (originalMode == AFTER_HEAD) {
-                        silentPop();
+                        // silentPop();
                     }
                     mode = originalMode;
                     break endtagloop;
